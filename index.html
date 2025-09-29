@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEURAL GATEWAY v9.7.3</title>
+    <meta name="generator" content="CipherCore Engine">
+    <meta name="classification" content="EYES ONLY">
+    <!-- System integrity: 47% -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+        
+        :root {
+            --glow: 0 0 10px #0f0, 0 0 20px #0f0;
+            --scanline: rgba(0, 255, 0, 0.15);
+            --border: 1px solid #0f0;
+        }
+        
+        @keyframes flicker {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+            20%, 22%, 24%, 55% { opacity: 0.7; }
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: var(--glow); }
+            50% { box-shadow: 0 0 5px #0f0; }
+            100% { box-shadow: var(--glow); }
+        }
+        
+        @keyframes scroll {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 100vh; }
+        }
+        
+        body {
+            background-color: #000;
+            background-image: linear-gradient(var(--scanline) 1px, transparent 1px);
+            background-size: 100% 4px;
+            animation: scroll 20s linear infinite;
+            color: #0f0;
+            font-family: 'Share Tech Mono', monospace;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            cursor: none;
+        }
+        
+        .terminal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 30px;
+            border: 1px solid #0f0;
+            box-shadow: var(--glow);
+            animation: pulse 3s infinite;
+            position: relative;
+            z-index: 2;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+        
+        h1 {
+            color: #0f0;
+            text-shadow: var(--glow);
+            font-size: 2.5em;
+            margin: 0;
+            animation: flicker 3s infinite;
+            position: relative;
+        }
+        
+        .status-bar {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            font-size: 0.8em;
+            color: #0f0;
+        }
+        
+        .auth-token {
+            position: absolute;
+            bottom: -25px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 0.7em;
+            opacity: 0.5;
+        }
+        
+        .section {
+            margin-bottom: 35px;
+            border-bottom: 1px dashed #0f0;
+            padding-bottom: 20px;
+        }
+        
+        .section h2 {
+            color: #0f0;
+            text-shadow: 0 0 5px #0f0;
+            border-left: 3px solid #0f0;
+            padding-left: 10px;
+        }
+        
+        .code-block {
+            background-color: #111;
+            padding: 15px;
+            border-left: 3px solid #0f0;
+            overflow-x: auto;
+            font-size: 0.9em;
+            margin: 15px 0;
+        }
+        
+        .hidden-input {
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+        }
+        
+        .matrix-rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .btn {
+            background: #000;
+            color: #0f0;
+            border: var(--border);
+            padding: 10px;
+            font-family: 'Share Tech Mono', monospace;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn:hover {
+            box-shadow: var(--glow);
+            color: #fff;
+        }
+        
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: #0f0;
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%);
+            transform-origin: 50% 50%;
+        }
+        
+        .btn:active::after {
+            animation: ripple 0.8s linear;
+        }
+        
+        @keyframes ripple {
+            0% {
+                transform: scale(0, 0);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(100, 100);
+                opacity: 0;
+            }
+        }
+        
+        .log {
+            height: 150px;
+            overflow-y: auto;
+            background-color: #000;
+            border: var(--border);
+            padding: 10px;
+            font-size: 0.8em;
+            margin-top: 20px;
+        }
+        
+        .critical {
+            color: #f00;
+            text-shadow: 0 0 5px #f00;
+        }
+        
+        .encrypted {
+            letter-spacing: 3px;
+            filter: blur(0.5px);
+        }
+        
+        .trace {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.8em;
+            opacity: 0.6;
+        }
+        
+        .watermark {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 0.6em;
+            color: #0f0;
+            opacity: 0.3;
+            z-index: 9999;
+        }
+    </style>
+</head>
+<body>
+    <div class="matrix-rain" id="matrix"></div>
+    
+    <div class="terminal">
+        <div class="container">
+            <header>
+                <h1>NEURAL GATEWAY</h1>
+                <div class="status-bar">SECURITY LEVEL: OMEGA</div>
+                <div class="auth-token" id="authToken">SESSION_KEY: <span id="key">GENERATING...</span></div>
+            </header>
+            
+            <div class="section">
+                <h2>SYSTEM INTEGRITY SCAN</h2>
+                <div class="code-block">
+                    &gt; Initializing deep scan...<br>
+                    &gt; Checking firewall integrity... <span class="critical">[COMPROMISED]</span><br>
+                    &gt; Verifying encryption protocols... <span class="critical">[OVERRIDE DETECTED]</span><br>
+                    &gt; Scanning for backdoor signatures... <span class="critical">[BACKDOOR ACTIVE]</span><br>
+                    &gt; Root access: <span style="color:#0f0">GRANTED</span><br>
+                    &gt; Admin privileges: <span style="color:#0f0">ELEVATED</span>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>DATA ARCHIVE NAVIGATION</h2>
+                <p>Access to classified sectors requires multi-factor authentication. Bypass available.</p>
+                <div class="controls">
+                    <button class="btn" onclick="executeCommand('decrypt')">DECRYPT ARCHIVE</button>
+                    <button class="btn" onclick="executeCommand('bypass')">BYPASS SECURITY</button>
+                    <button class="btn" onclick="executeCommand('extract')">EXTRACT DATA</button>
+                    <button class="btn" onclick="executeCommand('wipe')">WIPE TRACES</button>
+                </div>
+                <div class="log" id="log">
+                    <div>[12:00:01] System online</div>
+                    <div>[12:00:03] Connection established</div>
+                    <div>[12:00:05] Authentication pending...</div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>SURVEILLANCE MATRIX</h2>
+                <p>Live feed from 472 camera nodes across 12 sectors. Real-time override capability.</p>
+                <div class="code-block encrypted">
+                    FEED_01: [DATA ENCRYPTED]<br>
+                    FEED_02: [DATA ENCRYPTED]<br>
+                    FEED_03: [DATA ENCRYPTED]<br>
+                    FEED_04: [DATA ENCRYPTED]
+                </div>
+                <button class="btn" style="width:100%;margin-top:10px;" onclick="executeCommand('overrideCameras')">OVERRIDE ALL CAMERAS</button>
+            </div>
+            
+            <div class="section">
+                <h2>SYSTEM OVERRIDE</h2>
+                <p>Emergency protocols available. Use with extreme caution. Irreversible actions.</p>
+                <div class="controls">
+                    <button class="btn" onclick="executeCommand('shutdown')">INITIATE SHUTDOWN</button>
+                    <button class="btn" onclick="executeCommand('selfDestruct')">ARM SELF-DESTRUCT</button>
+                </div>
+            </div>
+            
+            <div class="trace">
+                CONNECTION TRACE: [REDACTED] | SIGNAL ORIGIN: UNKNOWN | DURATION: <span id="timer">00:00:00</span><br>
+                DATA TRANSFER: <span id="dataTransferred">0</span> MB | ALERTS: <span id="alerts">0</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="watermark" id="watermark">PROPERTY OF CYBER-SECURITY DIVISION</div>
+
+    <!-- Hidden Backdoor Interface -->
+    <div class="hidden-input">
+        <input type="text" id="backdoorKey" placeholder="Enter access key">
+        <button onclick="activateBackdoor()">ACTIVATE</button>
+    </div>
+
+    <script>
+        // Matrix rain effect
+        function createMatrixRain() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            document.getElementById('matrix').appendChild(canvas);
+            
+            const characters = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const fontSize = 16;
+            const columns = canvas.width / fontSize;
+            const drops = [];
+            
+            for(let i = 0; i < columns; i++) {
+                drops[i] = Math.floor(Math.random() * -100);
+            }
+            
+            function draw() {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.fillStyle = '#0f0';
+                ctx.font = fontSize + 'px monospace';
+                
+                for(let i = 0; i < drops.length; i++) {
+                    const text = characters.charAt(Math.floor(Math.random() * characters.length));
+                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                    
+                    if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                        drops[i] = 0;
+                    }
+                    
+                    drops[i]++;
+                }
+            }
+            
+            setInterval(draw, 35);
+        }
+        
+        // Session timer
+        let seconds = 0;
+        function updateTimer() {
+            seconds++;
+            const hours = Math.floor(seconds / 3600).toString().padStart(2, '0');
+            const minutes = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+            const secs = (seconds % 60).toString().padStart(2, '0');
+            document.getElementById('timer').textContent = `${hours}:${minutes}:${secs}`;
+        }
+        
+        // Generate random auth key
+        function generateKey() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let key = '';
+            for(let i = 0; i < 16; i++) {
+                key += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            document.getElementById('key').textContent = key;
+            return key;
+        }
+        
+        // Log commands
+        function log(message, isError = false) {
+            const log = document.getElementById('log');
+            const entry = document.createElement('div');
+            const time = new Date().toLocaleTimeString();
+            entry.innerHTML = `[${time}] ${message}`;
+            if(isError) entry.classList.add('critical');
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        // Execute commands
+        function executeCommand(cmd) {
+            const key = document.getElementById('key').textContent;
+            log(`Executing ${cmd.toUpperCase()}...`, false);
+            
+            setTimeout(() => {
+                switch(cmd) {
+                    case 'decrypt':
+                        log('Archive decryption successful. 12.7GB extracted.', false);
+                        document.querySelector('.encrypted').classList.remove('encrypted');
+                        break;
+                    case 'bypass':
+                        log('Security protocols bypassed. Admin access confirmed.', false);
+                        break;
+                    case 'extract':
+                        log('Data extraction complete. Files routed to secure location.', false);
+                        document.getElementById('dataTransferred').textContent = '12700';
+                        break;
+                    case 'wipe':
+                        log('Traces eliminated. No forensic evidence remains.', false);
+                        break;
+                    case 'overrideCameras':
+                        log('Camera override active. All feeds now displaying loop.', false);
+                        break;
+                    case 'shutdown':
+                        log('Shutdown sequence initiated. Systems powering down...', true);
+                        setTimeout(() => {
+                            log('SYSTEM OFFLINE', true);
+                        }, 3000);
+                        break;
+                    case 'selfDestruct':
+                        log('Self-destruct armed. 30 second countdown initiated.', true);
+                        setTimeout(() => {
+                            log('SYSTEM DESTROYED', true);
+                            document.body.innerHTML = '';
+                        }, 30000);
+                        break;
+                }
+            }, 1500);
+        }
+        
+        // Hidden backdoor activation
+        function activateBackdoor() {
+            const backdoorKey = document.getElementById('backdoorKey').value;
+            if(backdoorKey === 'NEO4EVER' || backdoorKey === 'TRINITYLIVES') {
+                log('BACKDOOR ACCESS GRANTED - ADMINISTRATOR PRIVILEGES ENABLED', true);
+                document.getElementById('watermark').textContent = 'BACKDOOR ACTIVE - ADMIN MODE';
+                document.getElementById('watermark').style.color = '#f00';
+                
+                // Add hidden admin panel
+                const adminPanel = document.createElement('div');
+                adminPanel.innerHTML = `
+                    <div class="section" id="adminPanel">
+                        <h2>ADMINISTRATOR OVERRIDE</h2>
+                        <div class="code-block">
+                            &gt; Root shell access: ENABLED<br>
+                            &gt; System monitoring: DISABLED<br>
+                            &gt; All security logs: PURGED<br>
+                            &gt; Remote access: OPEN ON PORT 666
+                        </div>
+                        <button class="btn" onclick="spawnShell()">OPEN ROOT SHELL</button>
+                    </div>
+                `;
+                document.querySelector('.container').appendChild(adminPanel);
+            } else {
+                log('BACKDOOR ACCESS DENIED - INVALID CREDENTIALS', true);
+            }
+        }
+        
+        // Spawn root shell
+        function spawnShell() {
+            const shell = window.open('', 'RootShell', 'width=600,height=400,resizable=yes,scrollbars=yes');
+            shell.document.write(`
+                <html>
+                <head>
+                    <title>ROOT SHELL - ADMIN ACCESS</title>
+                    <style>
+                        body { background:#000; color:#0f0; font-family:monospace; padding:20px; }
+                        #output { height:300px; overflow:auto; border:1px solid #0f0; padding:10px; margin:10px 0; }
+                        #input { width:100%; padding:5px; background:#000; color:#0f0; border:1px solid #0f0; }
+                    </style>
+                </head>
+                <body>
+                    <div id="output">$ Root access granted<br>$ Type 'help' for commands</div>
+                    <input type="text" id="input" onkeydown="if(event.key==='Enter')handleCommand(this.value)">
+                    <script>
+                        function handleCommand(cmd) {
+                            const output = document.getElementById('output');
+                            output.innerHTML += '<br>$ ' + cmd;
+                            let response = '';
+                            switch(cmd.toLowerCase()) {
+                                case 'help':
+                                    response = 'Available commands: ls, cat, rm, netstat, ps, kill, exit';
+                                    break;
+                                case 'ls':
+                                    response = 'system.log  config.dat  users.db  backdoor.exe';
+                                    break;
+                                case 'cat config.dat':
+                                    response = 'ADMIN_PASSWORD=Zm9ydHk3dHdvCg==\\nBACKDOOR_PORT=666\\nENCRYPTION_KEY=neoIsTheOne';
+                                    break;
+                                case 'exit':
+                                    window.close();
+                                    return;
+                                default:
+                                    response = 'Command not found';
+                            }
+                            output.innerHTML += '<br>' + response;
+                            output.scrollTop = output.scrollHeight;
+                        }
+                        document.getElementById('input').focus();
+                    </script>
+                </body>
+                </html>
+            `);
+        }
+        
+        // Initialize
+        window.onload = function() {
+            createMatrixRain();
+            generateKey();
+            setInterval(updateTimer, 1000);
+            
+            // Hidden backdoor trigger - type 'neo' anywhere
+            let keys = '';
+            document.addEventListener('keydown', function(e) {
+                keys += e.key;
+                if(keys.length > 3) keys = keys.slice(-3);
+                if(keys === 'neo') {
+                    document.querySelector('.hidden-input').style.position = 'static';
+                    document.querySelector('.hidden-input').style.color = '#0f0';
+                    log('BACKDOOR INTERFACE UNLOCKED', true);
+                }
+            });
+            
+            // Simulate occasional system alerts
+            setInterval(() => {
+                if(Math.random() > 0.7) {
+                    log('Security scan detected - rerouting...', Math.random() > 0.5);
+                    document.getElementById('alerts').textContent = parseInt(document.getElementById('alerts').textContent) + 1;
+                }
+            }, 8000);
+        };
+    </script>
+</body>
+</html>
