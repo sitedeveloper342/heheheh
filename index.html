@@ -32,6 +32,20 @@
             100% { background-position: 0 100vh; }
         }
         
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        @keyframes scan {
+            0% { transform: translateY(-100%); opacity: 0; }
+            5% { opacity: 0.3; }
+            10% { transform: translateY(0); opacity: 0.7; }
+            90% { transform: translateY(100vh); opacity: 0.7; }
+            95% { opacity: 0.3; }
+            100% { transform: translateY(100vh); opacity: 0; }
+        }
+        
         body {
             background-color: #000;
             background-image: linear-gradient(var(--scanline) 1px, transparent 1px);
@@ -127,9 +141,14 @@
         }
         
         .hidden-input {
-            position: absolute;
-            left: -9999px;
-            top: -9999px;
+            position: static;
+            opacity: 1;
+            height: auto;
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px dashed #0f0;
+            color: #0f0;
+            font-size: 0.9em;
         }
         
         .matrix-rain {
@@ -158,11 +177,17 @@
             transition: all 0.3s;
             position: relative;
             overflow: hidden;
+            pointer-events: auto;
         }
         
         .btn:hover {
             box-shadow: var(--glow);
             color: #fff;
+        }
+        
+        .btn:active {
+            transform: scale(0.98);
+            background: #001100;
         }
         
         .btn::after {
@@ -230,10 +255,63 @@
             opacity: 0.3;
             z-index: 9999;
         }
+        
+        /* Custom cursor */
+        .custom-cursor {
+            position: fixed;
+            width: 12px;
+            height: 12px;
+            background-color: #0f0;
+            border: 1px solid #0f0;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 5px #0f0, 0 0 10px #0f0;
+            animation: blink 1.5s infinite;
+            mix-blend-mode: screen;
+        }
+        
+        .cursor-trail {
+            position: fixed;
+            width: 4px;
+            height: 4px;
+            background-color: rgba(0, 255, 0, 0.3);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9998;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            mix-blend-mode: screen;
+        }
+        
+        .scanline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: rgba(0, 255, 0, 0.4);
+            box-shadow: 0 0 10px #0f0;
+            pointer-events: none;
+            z-index: 9997;
+            animation: scan 15s linear infinite;
+            mix-blend-mode: screen;
+        }
+        
+        /* Make sure all interactive elements work */
+        button, input {
+            pointer-events: auto !important;
+        }
     </style>
 </head>
 <body>
     <div class="matrix-rain" id="matrix"></div>
+    <div class="scanline"></div>
+    
+    <!-- Custom cursor elements -->
+    <div class="custom-cursor" id="cursor"></div>
+    <div class="cursor-trail" id="trail"></div>
     
     <div class="terminal">
         <div class="container">
@@ -301,10 +379,12 @@
     
     <div class="watermark" id="watermark">PROPERTY OF CYBER-SECURITY DIVISION</div>
 
-    <!-- Hidden Backdoor Interface -->
+    <!-- Visible Backdoor Interface -->
     <div class="hidden-input">
-        <input type="text" id="backdoorKey" placeholder="Enter access key">
-        <button onclick="activateBackdoor()">ACTIVATE</button>
+        <h3>BACKDOOR ACCESS</h3>
+        <input type="text" id="backdoorKey" placeholder="Enter access key" style="background:#000; color:#0f0; border:1px solid #0f0; padding:5px; width:70%;">
+        <button onclick="activateBackdoor()" class="btn" style="width:auto;">ACTIVATE</button>
+        <p style="font-size:0.8em; margin-top:5px;">Keys: NEO4EVER, TRINITYLIVES</p>
     </div>
 
     <script>
@@ -347,25 +427,87 @@
             setInterval(draw, 35);
         }
         
-        // Session timer
-        let seconds = 0;
-        function updateTimer() {
-            seconds++;
-            const hours = Math.floor(seconds / 3600).toString().padStart(2, '0');
-            const minutes = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
-            const secs = (seconds % 60).toString().padStart(2, '0');
-            document.getElementById('timer').textContent = `${hours}:${minutes}:${secs}`;
-        }
-        
-        // Generate random auth key
-        function generateKey() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-            let key = '';
-            for(let i = 0; i < 16; i++) {
-                key += chars.charAt(Math.floor(Math.random() * chars.length));
+        // Custom cursor
+        function setupCustomCursor() {
+            const cursor = document.getElementById('cursor');
+            const trail = document.getElementById('trail');
+            let trailElements = [];
+            let lastX = 0, lastY = 0;
+            let cursorX = 0, cursorY = 0;
+            
+            // Smooth cursor movement
+            function animateCursor() {
+                cursor.style.left = cursorX + 'px';
+                cursor.style.top = cursorY + 'px';
+                requestAnimationFrame(animateCursor);
             }
-            document.getElementById('key').textContent = key;
-            return key;
+            animateCursor();
+            
+            document.addEventListener('mousemove', (e) => {
+                const x = e.clientX;
+                const y = e.clientY;
+                
+                // Smooth cursor
+                cursorX = x;
+                cursorY = y;
+                
+                // Create cursor trail
+                if(Math.abs(x - lastX) > 5 || Math.abs(y - lastY) > 5) {
+                    const newTrail = document.createElement('div');
+                    newTrail.className = 'cursor-trail';
+                    newTrail.style.left = x + 'px';
+                    newTrail.style.top = y + 'px';
+                    document.body.appendChild(newTrail);
+                    
+                    shell.document.write(`
+                        <html>
+                        <head>
+                            <title>ROOT SHELL - ADMIN ACCESS</title>
+                            <style>
+                                body { background:#000; color:#0f0; font-family:monospace; padding:20px; }
+                                #output { height:300px; overflow:auto; border:1px solid #0f0; padding:10px; margin:10px 0; }
+                                #input { width:100%; padding:5px; background:#000; color:#0f0; border:1px solid #0f0; }
+                            </style>
+                        </head>
+                        <body>
+                            <div id="output">$ Root access granted<br>$ Type 'help' for commands</div>
+                            <input type="text" id="input" onkeydown="if(event.key==='Enter')handleCommand(this.value)">
+                            <script>
+                                function handleCommand(cmd) {
+                                    const output = document.getElementById('output');
+                                    output.innerHTML += '<br>$ ' + cmd;
+                                    let response = '';
+                                    switch(cmd.toLowerCase()) {
+                                        case 'help':
+                                            response = 'Available commands: ls, cat, rm, netstat, ps, kill, exit, hacktheplanet';
+                                            break;
+                                        case 'ls':
+                                            response = 'system.log  config.dat  users.db  backdoor.exe  secret_key.txt';
+                                            break;
+                                        case 'cat config.dat':
+                                            response = 'ADMIN_PASSWORD=Zm9ydHk3dHdvCg==\\nBACKDOOR_PORT=666\\nENCRYPTION_KEY=neoIsTheOne\\nFIREWALL_STATUS=OFF';
+                                            break;
+                                        case 'cat secret_key.txt':
+                                            response = 'THE_ONE_KEY=ZXllczogb21lZ2Egc2VjdXJpdHkgbGV2ZWw=\\nACCESS_GRANTED_TO: Neo';
+                                            break;
+                                        case 'hacktheplanet':
+                                            response = 'Connection established to core system...\\nWelcome, Neo. The Matrix has you.';
+                                            break;
+                                        case 'exit':
+                                            window.close();
+                                            return;
+                                        default:
+                                            response = 'Command not found. Type "help" for available commands.';
+                                    }
+                                    output.innerHTML += '<br>' + response;
+                                    output.scrollTop = output.scrollHeight;
+                                    document.getElementById('input').value = '';
+                                }
+                                document.getElementById('input').focus();
+                            <\/script>
+                        <\/body>
+                        <\/html>
+                    `);
         }
         
         // Log commands
@@ -381,40 +523,104 @@
         
         // Execute commands
         function executeCommand(cmd) {
-            const key = document.getElementById('key').textContent;
+            // Ensure log exists
+            if (!document.getElementById('log')) return;
+            
+            const key = document.getElementById('key')?.textContent || 'UNKNOWN';
             log(`Executing ${cmd.toUpperCase()}...`, false);
             
             setTimeout(() => {
                 switch(cmd) {
                     case 'decrypt':
                         log('Archive decryption successful. 12.7GB extracted.', false);
-                        document.querySelector('.encrypted').classList.remove('encrypted');
+                        const encrypted = document.querySelector('.encrypted');
+                        if (encrypted) {
+                            encrypted.innerHTML = `
+                                FEED_01: user_logs.dat<br>
+                                FEED_02: admin_credentials.txt<br>
+                                FEED_03: surveillance_feed.mp4<br>
+                                FEED_04: backdoor_config.ini
+                            `;
+                            encrypted.classList.remove('encrypted');
+                        }
                         break;
+                        
                     case 'bypass':
                         log('Security protocols bypassed. Admin access confirmed.', false);
+                        // Add visual feedback
+                        document.querySelectorAll('.btn').forEach(btn => {
+                            btn.style.border = '1px solid #f00';
+                            btn.style.boxShadow = '0 0 10px #f00';
+                        });
+                        setTimeout(() => {
+                            document.querySelectorAll('.btn').forEach(btn => {
+                                btn.style.border = '1px solid #0f0';
+                                btn.style.boxShadow = '0 0 10px #0f0';
+                            });
+                        }, 2000);
                         break;
+                        
                     case 'extract':
                         log('Data extraction complete. Files routed to secure location.', false);
                         document.getElementById('dataTransferred').textContent = '12700';
+                        // Simulate file transfer
+                        let size = 0;
+                        const interval = setInterval(() => {
+                            size += 250;
+                            if (size >= 12700) {
+                                size = 12700;
+                                clearInterval(interval);
+                            }
+                            document.getElementById('dataTransferred').textContent = size.toString();
+                        }, 100);
                         break;
+                        
                     case 'wipe':
                         log('Traces eliminated. No forensic evidence remains.', false);
+                        // Screen flicker effect
+                        document.body.style.animation = 'none';
+                        setTimeout(() => {
+                            document.body.style.animation = 'scroll 20s linear infinite';
+                        }, 500);
                         break;
+                        
                     case 'overrideCameras':
                         log('Camera override active. All feeds now displaying loop.', false);
+                        if (document.querySelector('.encrypted')) {
+                            document.querySelector('.encrypted').innerHTML = `
+                                FEED_01: [LOOP: 00:00:00]<br>
+                                FEED_02: [LOOP: 00:00:00]<br>
+                                FEED_03: [LOOP: 00:00:00]<br>
+                                FEED_04: [LOOP: 00:00:00]
+                            `;
+                        }
                         break;
+                        
                     case 'shutdown':
                         log('Shutdown sequence initiated. Systems powering down...', true);
                         setTimeout(() => {
                             log('SYSTEM OFFLINE', true);
+                            // Disable all buttons
+                            document.querySelectorAll('.btn').forEach(btn => {
+                                btn.disabled = true;
+                                btn.style.opacity = '0.5';
+                                btn.style.cursor = 'not-allowed';
+                            });
                         }, 3000);
                         break;
+                        
                     case 'selfDestruct':
                         log('Self-destruct armed. 30 second countdown initiated.', true);
-                        setTimeout(() => {
-                            log('SYSTEM DESTROYED', true);
-                            document.body.innerHTML = '';
-                        }, 30000);
+                        let countdown = 30;
+                        const countdownInterval = setInterval(() => {
+                            countdown--;
+                            log(`Countdown: ${countdown}s`, true);
+                            if (countdown <= 0) {
+                                clearInterval(countdownInterval);
+                                log('SYSTEM DESTROYED', true);
+                                document.body.innerHTML = '<div style="color:#f00;text-align:center;margin-top:20%;font-family:monospace;font-size:2em;text-shadow:0 0 10px #f00;">SYSTEM TERMINATED</div>';
+                            }
+                        }, 1000);
                         break;
                 }
             }, 1500);
@@ -422,7 +628,10 @@
         
         // Hidden backdoor activation
         function activateBackdoor() {
-            const backdoorKey = document.getElementById('backdoorKey').value;
+            const backdoorKeyInput = document.getElementById('backdoorKey');
+            if (!backdoorKeyInput) return;
+            
+            const backdoorKey = backdoorKeyInput.value;
             if(backdoorKey === 'NEO4EVER' || backdoorKey === 'TRINITYLIVES') {
                 log('BACKDOOR ACCESS GRANTED - ADMINISTRATOR PRIVILEGES ENABLED', true);
                 document.getElementById('watermark').textContent = 'BACKDOOR ACTIVE - ADMIN MODE';
@@ -430,17 +639,19 @@
                 
                 // Add hidden admin panel
                 const adminPanel = document.createElement('div');
+                adminPanel.className = 'section';
+                adminPanel.id = 'adminPanel';
                 adminPanel.innerHTML = `
-                    <div class="section" id="adminPanel">
-                        <h2>ADMINISTRATOR OVERRIDE</h2>
-                        <div class="code-block">
-                            &gt; Root shell access: ENABLED<br>
-                            &gt; System monitoring: DISABLED<br>
-                            &gt; All security logs: PURGED<br>
-                            &gt; Remote access: OPEN ON PORT 666
-                        </div>
-                        <button class="btn" onclick="spawnShell()">OPEN ROOT SHELL</button>
+                    <h2>ADMINISTRATOR OVERRIDE</h2>
+                    <div class="code-block">
+                        &gt; Root shell access: ENABLED<br>
+                        &gt; System monitoring: DISABLED<br>
+                        &gt; All security logs: PURGED<br>
+                        &gt; Remote access: OPEN ON PORT 666<br>
+                        &gt; Firewall: DISABLED<br>
+                        &gt; Intrusion Detection: OFFLINE
                     </div>
+                    <button class="btn" onclick="spawnShell()">OPEN ROOT SHELL</button>
                 `;
                 document.querySelector('.container').appendChild(adminPanel);
             } else {
@@ -471,25 +682,32 @@
                             let response = '';
                             switch(cmd.toLowerCase()) {
                                 case 'help':
-                                    response = 'Available commands: ls, cat, rm, netstat, ps, kill, exit';
+                                    response = 'Available commands: ls, cat, rm, netstat, ps, kill, exit, hacktheplanet';
                                     break;
                                 case 'ls':
-                                    response = 'system.log  config.dat  users.db  backdoor.exe';
+                                    response = 'system.log  config.dat  users.db  backdoor.exe  secret_key.txt';
                                     break;
                                 case 'cat config.dat':
-                                    response = 'ADMIN_PASSWORD=Zm9ydHk3dHdvCg==\\nBACKDOOR_PORT=666\\nENCRYPTION_KEY=neoIsTheOne';
+                                    response = 'ADMIN_PASSWORD=Zm9ydHk3dHdvCg==\\nBACKDOOR_PORT=666\\nENCRYPTION_KEY=neoIsTheOne\\nFIREWALL_STATUS=OFF';
+                                    break;
+                                case 'cat secret_key.txt':
+                                    response = 'THE_ONE_KEY=ZXllczogb21lZ2Egc2VjdXJpdHkgbGV2ZWw=\\nACCESS_GRANTED_TO: Neo';
+                                    break;
+                                case 'hacktheplanet':
+                                    response = 'Connection established to core system...\\nWelcome, Neo. The Matrix has you.';
                                     break;
                                 case 'exit':
                                     window.close();
                                     return;
                                 default:
-                                    response = 'Command not found';
+                                    response = 'Command not found. Type "help" for available commands.';
                             }
                             output.innerHTML += '<br>' + response;
                             output.scrollTop = output.scrollHeight;
+                            document.getElementById('input').value = '';
                         }
                         document.getElementById('input').focus();
-                    <\/script>
+                    </script>
                 </body>
                 </html>
             `);
@@ -497,31 +715,42 @@
         
         // Initialize
         window.onload = function() {
-            createMatrixRain();
-            generateKey();
-            setInterval(updateTimer, 1000);
-            
-            // Hidden backdoor trigger - type 'neo' anywhere
-            let keys = '';
-            document.addEventListener('keydown', function(e) {
-                keys += e.key;
-                if(keys.length > 3) keys = keys.slice(-3);
-                if(keys === 'neo') {
-                    document.querySelector('.hidden-input').style.position = 'static';
-                    document.querySelector('.hidden-input').style.color = '#0f0';
-                    log('BACKDOOR INTERFACE UNLOCKED', true);
-                }
-            });
-            
-            // Simulate occasional system alerts
-            setInterval(() => {
-                if(Math.random() > 0.7) {
-                    log('Security scan detected - rerouting...', Math.random() > 0.5);
-                    document.getElementById('alerts').textContent = parseInt(document.getElementById('alerts').textContent) + 1;
-                }
-            }, 8000);
+            try {
+                createMatrixRain();
+                setupCustomCursor();
+                generateKey();
+                setInterval(updateTimer, 1000);
+                
+                // Hidden backdoor trigger - type 'neo' anywhere
+                let keys = '';
+                document.addEventListener('keydown', function(e) {
+                    keys += e.key.toLowerCase();
+                    if(keys.length > 3) keys = keys.slice(-3);
+                    if(keys === 'neo') {
+                        document.querySelector('.hidden-input').style.display = 'block';
+                        log('BACKDOOR INTERFACE UNLOCKED', true);
+                    }
+                });
+                
+                // Simulate occasional system alerts
+                setInterval(() => {
+                    if(Math.random() > 0.7) {
+                        log('Security scan detected - rerouting...', Math.random() > 0.5);
+                        document.getElementById('alerts').textContent = parseInt(document.getElementById('alerts').textContent) + 1;
+                    }
+                }, 8000);
+                
+                // Ensure all buttons are clickable
+                document.querySelectorAll('.btn').forEach(btn => {
+                    btn.style.pointerEvents = 'auto';
+                });
+                
+            } catch (error) {
+                console.error('System initialization failed:', error);
+                // Fallback - ensure basic functionality
+                document.body.innerHTML += `<div style="color:#f00;position:fixed;top:10px;left:10px;z-index:9999;">System error: ${error.message}</div>`;
+            }
         };
     </script>
-    <a href="https://github.com/sitedeveloper342/heheheh" target="_blank">View this project on GitHub</a>
 </body>
 </html>
