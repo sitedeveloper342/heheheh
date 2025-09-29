@@ -93,7 +93,6 @@
         
         h1 {
             color: #0f0;
-            text-shadow: var(--glow);
             font-size: 2.5em;
             margin: 0;
             animation: flicker 3s infinite;
@@ -343,7 +342,7 @@
                     <button class="btn" onclick="executeCommand('wipe')">WIPE TRACES</button>
                 </div>
                 <div class="log" id="log">
-                    <div>[12:00:01] System online</div>
+            </html>
                     <div>[12:00:03] Connection established</div>
                     <div>[12:00:05] Authentication pending...</div>
                 </div>
@@ -458,57 +457,10 @@
                     newTrail.style.left = x + 'px';
                     newTrail.style.top = y + 'px';
                     document.body.appendChild(newTrail);
-                    
-                    shell.document.write(`
-                        <html>
-                        <head>
-                            <title>ROOT SHELL - ADMIN ACCESS</title>
-                            <style>
-                                body { background:#000; color:#0f0; font-family:monospace; padding:20px; }
-                                #output { height:300px; overflow:auto; border:1px solid #0f0; padding:10px; margin:10px 0; }
-                                #input { width:100%; padding:5px; background:#000; color:#0f0; border:1px solid #0f0; }
-                            </style>
-                        </head>
-                        <body>
-                            <div id="output">$ Root access granted<br>$ Type 'help' for commands</div>
-                            <input type="text" id="input" onkeydown="if(event.key==='Enter')handleCommand(this.value)">
-                            <script>
-                                function handleCommand(cmd) {
-                                    const output = document.getElementById('output');
-                                    output.innerHTML += '<br>$ ' + cmd;
-                                    let response = '';
-                                    switch(cmd.toLowerCase()) {
-                                        case 'help':
-                                            response = 'Available commands: ls, cat, rm, netstat, ps, kill, exit, hacktheplanet';
-                                            break;
-                                        case 'ls':
-                                            response = 'system.log  config.dat  users.db  backdoor.exe  secret_key.txt';
-                                            break;
-                                        case 'cat config.dat':
-                                            response = 'ADMIN_PASSWORD=Zm9ydHk3dHdvCg==\\nBACKDOOR_PORT=666\\nENCRYPTION_KEY=neoIsTheOne\\nFIREWALL_STATUS=OFF';
-                                            break;
-                                        case 'cat secret_key.txt':
-                                            response = 'THE_ONE_KEY=ZXllczogb21lZ2Egc2VjdXJpdHkgbGV2ZWw=\\nACCESS_GRANTED_TO: Neo';
-                                            break;
-                                        case 'hacktheplanet':
-                                            response = 'Connection established to core system...\\nWelcome, Neo. The Matrix has you.';
-                                            break;
-                                        case 'exit':
-                                            window.close();
-                                            return;
-                                        default:
-                                            response = 'Command not found. Type "help" for available commands.';
-                                    }
-                                    output.innerHTML += '<br>' + response;
-                                    output.scrollTop = output.scrollHeight;
-                                    document.getElementById('input').value = '';
-                                }
-                                document.getElementById('input').focus();
-                            <\/script>
-                        <\/body>
-                        <\/html>
-                    `);
-        }
+                }
+                lastX = x;
+                lastY = y;
+            });
         
         // Log commands
         function log(message, isError = false) {
@@ -677,9 +629,9 @@
                     <input type="text" id="input" onkeydown="if(event.key==='Enter')handleCommand(this.value)">
                     <script>
                         function handleCommand(cmd) {
-                            const output = document.getElementById('output');
+                            var output = document.getElementById('output');
                             output.innerHTML += '<br>$ ' + cmd;
-                            let response = '';
+                            var response = '';
                             switch(cmd.toLowerCase()) {
                                 case 'help':
                                     response = 'Available commands: ls, cat, rm, netstat, ps, kill, exit, hacktheplanet';
@@ -707,11 +659,11 @@
                             document.getElementById('input').value = '';
                         }
                         document.getElementById('input').focus();
-                    </script>
+                    <\/script>
                 </body>
                 </html>
             `);
-        }
+    }
         
         // Initialize
         window.onload = function() {
@@ -750,7 +702,8 @@
                 // Fallback - ensure basic functionality
                 document.body.innerHTML += `<div style="color:#f00;position:fixed;top:10px;left:10px;z-index:9999;">System error: ${error.message}</div>`;
             }
-        };
+        }
+        }
     </script>
 </body>
 </html>
